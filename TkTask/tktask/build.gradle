@@ -1,3 +1,5 @@
+import java.util.regex.Pattern
+
 apply plugin: 'com.android.library'
 
 android {
@@ -79,3 +81,28 @@ dependencies {
 
     implementation 'com.jakewharton.timber:timber:4.5.1'
 }
+
+// region maven
+
+def repo = new File(rootDir, "repository")
+
+apply plugin: 'maven'
+
+def manifestFile   = file("src/main/AndroidManifest.xml").getText()
+def packagePattern = Pattern.compile("package=\"([a-z\\.]+)\\.([a-z]+)\"")
+def packageMatcher = packagePattern.matcher(manifestFile)
+packageMatcher.find()
+
+uploadArchives {
+
+    repositories {
+        mavenDeployer {
+            repository url: "file://${repo.absolutePath}"
+            pom.version    = android.defaultConfig.versionName
+            pom.groupId    = packageMatcher.group(1)
+            pom.artifactId = packageMatcher.group(2)
+        }
+    }
+}
+
+// endregion maven
