@@ -1,0 +1,81 @@
+apply plugin: 'com.android.library'
+
+android {
+
+    // region var
+
+    def app_name = "TkTask"
+
+    def current_branch_name    = ""
+    def branch_name_for_app_id = ""
+    try {
+        current_branch_name    = "git rev-parse --abbrev-ref HEAD".execute().text.trim()
+        branch_name_for_app_id = current_branch_name.replaceAll("[!-/:-@¥\\[-`\\{-~\\]]", "_")
+    } catch (ignored) {
+        println "Git not found"
+    }
+
+    // endregion var
+
+    compileSdkVersion 27
+
+    defaultConfig {
+        minSdkVersion 22
+        targetSdkVersion 27
+        versionCode 1
+        versionName "0.0.1"
+        version = android.defaultConfig.versionName
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+    }
+
+    buildTypes {
+
+        release {
+            resValue 'string', 'app_name',            app_name
+            resValue 'string', 'current_branch_name', current_branch_name
+
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+
+        debug {
+            resValue 'string', 'app_name',            app_name + '":debug"'
+            resValue 'string', 'current_branch_name', current_branch_name
+
+            versionNameSuffix 'd'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    packagingOptions {
+        exclude 'assets/*'
+    }
+
+    libraryVariants.all { variant ->
+        variant.outputs.all { output ->
+            output.packageLibrary.exclude("libs/*")
+            if (variant.name == android.buildTypes.release.name) {
+                outputFileName = output.outputFile.name.replace(("-release.aar"), "-${version}.aar")
+            } else if (variant.name == android.buildTypes.debug.name) {
+                outputFileName = output.outputFile.name.replace((".aar"), "-${version}.aar")
+            }
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    implementation 'com.android.support:appcompat-v7:27.1.1'
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+
+    implementation 'com.jakewharton.timber:timber:4.5.1'
+}
